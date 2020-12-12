@@ -9,37 +9,78 @@ for line in [line.rstrip() for line in stdin.readlines()]:
 
     seat_chart.append(list(line))
 
+def is_in_bounds(x, y, seat_chart):
+    return x >= 0 and x < len(seat_chart[0]) and y >= 0 and y < len(seat_chart)
 
 def has_no_occupied_adjacents(x, y, seat_chart):
-    has_no_left = x != 0 and seat_chart[y][x-1] == 'L'
-    has_no_right = x <= len(seat_chart[0]) - 2 and seat_chart[y][x + 1] == 'L'
-    has_no_up = y != 0 and seat_chart[y-1][x] == 'L'
-    has_no_down = y <= len(seat_chart) - 2 and seat_chart[y+1][x] == 'L'
+    result = True
 
-    has_no_up_left = x != 0 and y != 0 and seat_chart[y - 1][x - 1] == 'L'
-    has_no_up_right = x <= len(seat_chart[0]) - 2 and y != 0 and seat_chart[y - 1][x + 1] == 'L'
-    has_no_down_left = x != 0 and y <= len(seat_chart) - 2 and seat_chart[y + 1][x - 1] == 'L'
-    has_no_down_right = x <= len(seat_chart[0]) - 2 and y <= len(seat_chart) - 2 and seat_chart[y + 1][x + 1] == 'L'
+    for delta in [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]:
+        x_to_check, y_to_check = delta[0] + x, delta[1] + y 
 
-    return has_no_left and has_no_right and has_no_up and has_no_down and has_no_up_left and has_no_up_right and has_no_down_left and has_no_down_right
+        if is_in_bounds(x_to_check, y_to_check, seat_chart) and seat_chart[y_to_check][x_to_check] == '#':
+            result = False
+            break
+
+    return result
 
 def has_four_or_more_adjacents(x, y, seat_chart):
-    count = 0
+    adjacents_count = 0
 
-    has_no_left = x > 0 and seat_chart[y][x - 1] == '#'
-    has_no_right = x != len(seat_chart[0]) - 1 and seat_chart[y][x + 1] == '#'
-    has_no_up = y != 0 and seat_chart[y-1][x] == '#'
-    has_no_down = y <= len(seat_chart) and seat_chart[y+1][x] == '#'
+    for delta in [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]:
+        x_to_check, y_to_check = delta[0] + x, delta[1] + y 
 
-    has_no_up_left = x != 0 and y != 0 and seat_chart[y - 1][x - 1] == '#'
-    has_no_up_right = x <= len(seat_chart[0]) - 2 and y != 0 and seat_chart[y - 1][x + 1] == '#'
-    has_no_down_left = x != 0 and y <= len(seat_chart) - 2 and seat_chart[y + 1][x - 1] == '#'
-    has_no_down_right = x <= len(seat_chart[0]) - 2 and y <= len(seat_chart) - 2 and seat_chart[y + 1][x + 1] == '#'
+        if is_in_bounds(x_to_check, y_to_check, seat_chart) and seat_chart[y_to_check][x_to_check] == '#':
+            adjacents_count += 1
 
-    for check in [has_no_left, has_no_right, has_no_up, has_no_down, has_no_up_left, has_no_up_right, has_no_down_left, has_no_down_right]:
-        count += 1 if check else 0
+    return adjacents_count >= 4
 
-    return count >= 4
+def has_no_occupied_adjacent_visibles(x, y, seat_chart):
+    result = True
+
+    for delta in [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]:
+        x_to_check, y_to_check = delta[0] + x, delta[1] + y 
+        result = True
+
+        while is_in_bounds(x_to_check, y_to_check, seat_chart):
+            if seat_chart[y_to_check][x_to_check] == '#':
+                result = False
+                break
+
+            if seat_chart[y_to_check][x_to_check] == 'L':
+                result = True
+                break
+
+            x_to_check += delta[0]
+            y_to_check += delta[1]
+        
+        if not result:
+            break
+
+    return result
+
+def has_five_or_more_adjacent_visibles(x, y, seat_chart):
+    adjacents_count = 0
+
+    for delta in [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]:
+        x_to_check, y_to_check = delta[0] + x, delta[1] + y 
+
+        while is_in_bounds(x_to_check, y_to_check, seat_chart):
+            if seat_chart[y_to_check][x_to_check] == '#':
+                adjacents_count += 1
+                break
+
+            if seat_chart[y_to_check][x_to_check] == 'L':
+                break
+            
+            x_to_check += delta[0]
+            y_to_check += delta[1]
+        
+        if adjacents_count >= 5:
+            break
+
+
+    return adjacents_count >= 5
 
 # If a seat is empty (L) and there are no occupied seats adjacent to it, the seat becomes occupied.
     
@@ -47,7 +88,6 @@ def has_four_or_more_adjacents(x, y, seat_chart):
 # Otherwise, the seat's state does not change.
 
 state_changed = True
-answer_part_one = -1
 
 while state_changed:
     state_changed = False
@@ -56,20 +96,25 @@ while state_changed:
     for y, row in enumerate(seat_chart):
         for x, seat in enumerate(row):
             if seat == 'L':
-                if has_no_occupied_adjacents(x, y, seat_chart):
+                if has_no_occupied_adjacent_visibles(x, y, seat_chart):
                     changes.append((y, x, '#'))
                     state_changed = True
 
             if seat == '#':
-                if has_four_or_more_adjacents(x, y, seat_chart):
+                if has_five_or_more_adjacent_visibles(x, y, seat_chart):
                     changes.append((y, x, 'L'))
                     state_changed = True
-
-    if state_changed:
-        answer_part_one += 1
 
     for change in changes:
         seat_chart[change[0]][change[1]] = change[2]
 
-print(seat_chart)
+answer_part_one = 0
+
+for row in seat_chart:
+    for seat in row:
+        if seat == '#':
+            answer_part_one += 1
+
+
+
 print(answer_part_one)
