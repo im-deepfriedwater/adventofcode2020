@@ -43,42 +43,51 @@ def turn_ship(direction, degrees, current_degree):
         current += 360
     return current
 
-def move_forward(direction, value, current_position):
-    new_position = current_position
+def turn_waypoint(direction, degrees, waypoint_position):
+    new_position = waypoint_position
 
-    if direction == 0:
-        new_position[1] += value
-    elif direction == 90:
-        new_position[0] += value
-    elif direction == 180:
-        new_position[1] -= value
-    elif direction == 270:
-        new_position[0] -= value
+    if degrees == 90 and direction == 'R':
+        new_position = [new_position[1], -new_position[0]]
+    elif degrees == 90 and direction == 'L':
+        new_position = [-new_position[1], new_position[0]]
+    elif degrees == 180:
+        new_position = [-new_position[0], -new_position[1]]
+    if degrees == 270 and direction == 'R':
+        new_position = [-new_position[1], new_position[0]]
+    elif degrees == 270 and direction == 'L':
+        new_position = [new_position[1], -new_position[0]]
 
     return new_position
 
-current_direction = 90
-current_position = [0, 0]
+def move_forward(value, current_position, ship_position):
+    new_position = ship_position
+
+    for _ in range(value):
+        new_position[0] += current_position[0]
+        new_position[1] += current_position[1]
+
+    return new_position
+
+current_position = [10, 1]
+ship_position = [0, 0]
 
 for command, value in commands:
     if command in ['N', 'S', 'E', 'W']:
         current_position = move_in_direction(command, value, current_position)
     elif command in ['L', 'R']:
-        current_direction = turn_ship(command, value, current_direction)
+        current_position = turn_waypoint(command, value, current_position)
     elif command == 'F':
-        current_position = move_forward(current_direction, value, current_position)
+        ship_position = move_forward(value, current_position, ship_position)
     
-print(current_position, current_direction)
-print(abs(current_position[0]) + abs(current_position[1]))
+
+print(current_position)
+print(abs(ship_position[0]) + abs(ship_position[1]))
 
 # 2532 not the answer
 # 3403 too high
 # 998 is answer
 
+# 10, 10
+# R90
 
-
-
-
-
-
-
+# 112266 too high
